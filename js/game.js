@@ -104,7 +104,7 @@
   }
 
   // ---------- the fixed arcade camera: straight down the tube, the whole rim fitting the free part of the page ----------
-  const BOX = { x0: -6.5, x1: 6.5, y0: -6.3, y1: 6.5 };
+  const BOX = { x0: -6.6, x1: 6.6, y0: -6.6, y1: 6.6 }; // every tube's rim, its riders and the rim arrows' key caps
   function fit() {
     const W = innerWidth, H = innerHeight;
     renderer.setSize(W, H, false);

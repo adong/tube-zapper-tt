@@ -1,0 +1,7 @@
+[
+  { "label": "muted", "js": "localStorage.setItem('claudeGames.muted', '1'); localStorage.setItem('claudeGames.lang', 'en'); location.reload(); 'reload'", "wait": 5000 },
+  { "label": "boots, real frames run", "js": "new Promise((r) => { const f0 = game.G.frame, t0 = game.G.time; setTimeout(() => r(JSON.stringify({ screen: game.state().screen, frames: game.G.frame - f0, secs: +(game.G.time - t0).toFixed(2), scripts: [...document.scripts].filter((s) => s.src).length, three: typeof THREE })), 1500); })" },
+  { "label": "? panel freezes the game", "js": "game.start({ level: 'easy', go: true }); new Promise((r) => setTimeout(() => { const t0 = game.world().t; Kit.help.open(); setTimeout(() => { const t1 = game.world().t; Kit.help.close(); setTimeout(() => r(JSON.stringify({ open: +(t1 - t0).toFixed(2), after: +(game.world().t - t1).toFixed(2) })), 600); }, 800); }, 300))" },
+  { "label": "checks", "js": "(() => { const a = game.check(), b = game.playCheck(); return JSON.stringify({ check: a.ok, play: b.ok, total: b.total, failed: b.failed.slice(0, 3) }); })()" },
+  { "label": "sabotages", "js": "(() => { const f = game.checkFail(); return JSON.stringify({ allCaught: f.ok, n: f.caught.length }); })()", "shot": "dist" }
+]

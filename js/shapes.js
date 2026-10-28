@@ -77,7 +77,7 @@
     { id: 'heart', name: 'HEART', open: false, make: heart, cols: ['#8a2a5a', '#a8356e'], edge: '#ff9ad0' },
     { id: 'bridge', name: 'BRIDGE', open: true, make: () => line(-6.2, 6.2, 2.7), far: (p) => p.map((q) => [q[0] * 0.6, -0.9]), cols: ['#2a6a4a', '#33845b'], edge: '#b6ff6a' },
     { id: 'flower', name: 'FLOWER', open: false, make: () => polar((i, a) => 4.35 + 0.95 * Math.cos(4 * (a - PI / 2)), 0), cols: ['#7a3a1a', '#9a4b22'], edge: '#ffb35e' },
-    { id: 'rainbow', name: 'RAINBOW', open: true, make: () => arc(5.5, -1.4), cols: ['#28408a', '#3352a8'], edge: '#ff7ad8' },
+    { id: 'rainbow', name: 'RAINBOW', open: true, make: () => arc(5.0, -1.1), cols: ['#28408a', '#3352a8'], edge: '#ff7ad8' },
     { id: 'diamond', name: 'DIAMOND', open: false, make: () => poly([[0, 5.6], [5.6, 0], [0, -5.6], [-5.6, 0]], 4), cols: ['#1a6a7a', '#22849a'], edge: '#c9a0ff' },
   ];
 
