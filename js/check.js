@@ -66,8 +66,8 @@
           if (L.w < 0.7 || L.w > 3.4) bad.push(`${sh.id} lane ${i}: ${L.w.toFixed(2)} m wide`);
           if (cross(L.a, L.b) >= 0) bad.push(`${sh.id} lane ${i} goes counter-clockwise`);
           turn += Math.atan2(cross(L.a, L.b), L.a[0] * L.b[0] + L.a[1] * L.b[1]);
-          for (const q of [L.a, L.b]) if (Math.abs(q[0]) > 6.1 || Math.abs(q[1]) > 6.1) bad.push(`${sh.id} lane ${i} sticks out of the box`);
-          const f = SH().at(p, i, 0), r = SH().at(p, i, 1);
+          for (const q of [L.a, L.b]) if (Math.abs(q[0]) > 6.25 || Math.abs(q[1]) > 6.25) bad.push(`${sh.id} lane ${i} sticks out of the box`);
+          const f = SH().at(sh, i, 0), r = SH().at(sh, i, 1);
           if (Math.hypot(f[0], f[1]) >= Math.hypot(r[0], r[1]) || f[2] >= r[2]) bad.push(`${sh.id} lane ${i}: far end not inside`);
           // no two lanes that don't share a point cross each other
           for (let j = i + 2; j < N; j++) {

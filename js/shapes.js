@@ -1,8 +1,9 @@
 /* TT Tube Zapper: the tube shapes. Every tube is 16 lanes; a shape is its 17 rim points, in clockwise order as seen from
    the camera (x right, y up, looking down the tube to -z). A closed shape's last point is its first; an open one (the
    flat bridge, the rainbow) has two ends, and sits above the middle so its clockwise way is also to the right.
-   Lane i runs from rim point i to point i + 1. The far end is the rim made smaller (FAR) and DEPTH metres away, so a
-   lane is a long four-sided strip from the far end up to the rim. d = 0 is the far end, d = 1 the rim.
+   Lane i runs from rim point i to point i + 1. The far end is DEPTH metres away: the rim made smaller (FAR), or for the
+   bridge a wide line lower down, like a road into the distance. So a lane is a long four-sided strip from the far end
+   up to the rim. d = 0 is the far end, d = 1 the rim.
    ← moves the zapper to lane i - 1 (counter-clockwise), → to lane i + 1 (clockwise). */
 (function (root) {
   'use strict';
@@ -74,7 +75,7 @@
     { id: 'square', name: 'SQUARE', open: false, make: () => poly([[-4.5, 4.5], [4.5, 4.5], [4.5, -4.5], [-4.5, -4.5]], 4), cols: ['#1d5a8a', '#2470a8'], edge: '#ffe45e' },
     { id: 'star', name: 'STAR', open: false, make: () => polar((i) => (i % 2 ? 2.75 : 5.5), 0), cols: ['#6a2a8a', '#8235a8'], edge: '#ffd400' },
     { id: 'heart', name: 'HEART', open: false, make: heart, cols: ['#8a2a5a', '#a8356e'], edge: '#ff9ad0' },
-    { id: 'bridge', name: 'BRIDGE', open: true, make: () => line(-6, 6, 2.7), cols: ['#2a6a4a', '#33845b'], edge: '#b6ff6a' },
+    { id: 'bridge', name: 'BRIDGE', open: true, make: () => line(-6.2, 6.2, 2.7), far: (p) => p.map((q) => [q[0] * 0.6, -0.9]), cols: ['#2a6a4a', '#33845b'], edge: '#b6ff6a' },
     { id: 'flower', name: 'FLOWER', open: false, make: () => polar((i, a) => 4.35 + 0.95 * Math.cos(4 * (a - PI / 2)), 0), cols: ['#7a3a1a', '#9a4b22'], edge: '#ffb35e' },
     { id: 'rainbow', name: 'RAINBOW', open: true, make: () => arc(5.5, -1.4), cols: ['#28408a', '#3352a8'], edge: '#ff7ad8' },
     { id: 'diamond', name: 'DIAMOND', open: false, make: () => poly([[0, 5.6], [5.6, 0], [0, -5.6], [-5.6, 0]], 4), cols: ['#1a6a7a', '#22849a'], edge: '#c9a0ff' },
@@ -86,7 +87,8 @@
       let pts = d.make();
       if (sab === 'shapeGap' && d.id === 'square') pts = pts.slice(0, N); // a lane missing: only 15
       if (sab === 'shapeMirror' && d.id === 'heart') pts = pts.slice().reverse(); // counter-clockwise: ← and → swap
-      return { id: d.id, name: d.name, open: d.open, pts, cols: d.cols, edge: d.edge };
+      const far = d.far ? d.far(pts) : pts.map((q) => [q[0] * FAR, q[1] * FAR]);
+      return { id: d.id, name: d.name, open: d.open, pts, far, cols: d.cols, edge: d.edge };
     });
   }
 
@@ -96,15 +98,28 @@
     const dx = b[0] - a[0], dy = b[1] - a[1], w = Math.hypot(dx, dy) || 1;
     return { a, b, mid: [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], w, n: [-dy / w, dx / w], t: [dx / w, dy / w] };
   }
-  // where a lane's middle is at depth d (0 far end .. 1 rim), in 3D
-  function at(pts, i, d, out) {
-    const L = lane(pts, i);
-    const s = FAR + (1 - FAR) * d;
+  // a rim point i at depth d (0 far end .. 1 rim), in 3D
+  function point(sh, i, d, out) {
     out = out || [0, 0, 0];
-    out[0] = L.mid[0] * s;
-    out[1] = L.mid[1] * s;
+    const a = sh.far[i], b = sh.pts[i];
+    out[0] = a[0] + (b[0] - a[0]) * d;
+    out[1] = a[1] + (b[1] - a[1]) * d;
     out[2] = -DEPTH * (1 - d);
     return out;
+  }
+  // where lane i's middle is at depth d, in 3D
+  function at(sh, i, d, out) {
+    out = out || [0, 0, 0];
+    const a0 = sh.far[i], a1 = sh.far[i + 1], b0 = sh.pts[i], b1 = sh.pts[i + 1];
+    out[0] = (a0[0] + a1[0]) / 2 + ((b0[0] + b1[0]) / 2 - (a0[0] + a1[0]) / 2) * d;
+    out[1] = (a0[1] + a1[1]) / 2 + ((b0[1] + b1[1]) / 2 - (a0[1] + a1[1]) / 2) * d;
+    out[2] = -DEPTH * (1 - d);
+    return out;
+  }
+  // how wide lane i is at depth d
+  function width(sh, i, d) {
+    const p = point(sh, i, d), q = point(sh, i + 1, d);
+    return Math.hypot(q[0] - p[0], q[1] - p[1]);
   }
   // the lane a zapper starts on: the highest one (the middle one if two tie), so → first goes right
   function startLane(shape) {
@@ -137,8 +152,9 @@
   }
   // the rim halfway between two shapes, for the morph from one tube to the next
   function mix(a, b, u) {
-    return { id: b.id, name: b.name, open: u < 0.5 ? a.open : b.open, pts: a.pts.map((p, i) => [p[0] + (b.pts[i][0] - p[0]) * u, p[1] + (b.pts[i][1] - p[1]) * u]), cols: b.cols, edge: b.edge };
+    const lerp = (A, B) => A.map((p, i) => [p[0] + (B[i][0] - p[0]) * u, p[1] + (B[i][1] - p[1]) * u]);
+    return { id: b.id, name: b.name, open: u < 0.5 ? a.open : b.open, pts: lerp(a.pts, b.pts), far: lerp(a.far, b.far), cols: b.cols, edge: b.edge };
   }
 
-  TZ.shapes = { N, FAR, DEPTH, DEFS, make, lane, at, startLane, step, toward, apart, mix };
+  TZ.shapes = { N, FAR, DEPTH, DEFS, make, lane, point, at, width, startLane, step, toward, apart, mix };
 })(typeof window !== 'undefined' ? window : globalThis);
